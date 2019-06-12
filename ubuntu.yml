@@ -1,0 +1,146 @@
+---
+- hosts: target
+  tasks:
+    - name: Install package - git
+      package:
+        name: git
+        state: present
+      become: true
+    - name: Install package - vim
+      package:
+        name: vim
+        state: present
+      become: true
+    - name: Install package - vlc
+      package:
+        name: vlc
+        state: present
+      become: true
+    - name: Install package - gnome-tweaks
+      package:
+        name: gnome-tweaks
+        state: present
+      become: true
+    - name: Install package - curl
+      package:
+        name: curl
+        state: present
+      become: true
+    - name: Install package - screenfetch
+      package:
+        name: screenfetch
+        state: present
+      become: true
+    - name: Install package - lolcat
+      package:
+        name: lolcat
+        state: present
+      become: true
+    - name: Install package - cmatrix
+      package:
+        name: cmatrix
+        state: present
+      become: true
+    - name: Install package - python-pip
+      package:
+        name: python-pip
+        state: present
+      become: true
+      
+    - name: Install snap - communitheme
+      snap:
+        name: communitheme
+        state: present
+      become: true
+      
+    - name: Upgrade pip
+      pip:
+        name: pip
+        state: latest
+      become: true
+      
+    - name: Install pip - tmux2html
+      pip:
+        name: tmux2html
+        state: present
+      become: true
+          
+    - name: Get tmux bash completion
+      get_url:
+        url: https://raw.githubusercontent.com/imomaliev/tmux-bash-completion/master/completions/tmux
+        dest: /home/{{ ansible_user_id }}/.tmux-completion.sh
+ 
+    - name: Write .bashrc
+      blockinfile:
+        path: /home/{{ ansible_user_id }}/.bashrc
+        block: |
+          # colors
+          RED='\033[01;31m'
+          GREEN='\033[01;32m'
+          YELLOW='\033[01;33m'
+          BLUE='\033[01;34m'
+          BOLD='\033[01;01m'
+          RESET='\033[00m'
+          # aliases
+          alias vi='vim'
+          alias http='python -m SimpleHTTPServer'
+          alias clip='xclip -sel clip'
+          # tmux bash completion
+          source ~/.tmux-completion.sh
+          
+    - name: GNOME settings - python-psutil
+      package:
+        name: python-psutil
+        state: present
+      become: true
+    - name: GNOME settings - icon theme
+      dconf:
+        key: /org/gnome/desktop/interface/icon-theme
+        value: "'communitheme'"
+        state: present
+    - name: GNOME settings - cursor theme
+      dconf:
+        key: /org/gnome/desktop/interface/cursor-theme
+        value: "'communitheme'"
+        state: present
+    - name: GNOME settings - gtk theme
+      dconf:
+        key: /org/gnome/desktop/interface/gtk-theme
+        value: "'Adwaita-dark'"
+        state: present
+    - name: GNOME settings - download wallpaper
+      get_url:
+        url: https://images.alphacoders.com/716/71611.jpg
+        dest: /home/{{ ansible_user_id }}/.wallpaper.jpg
+    - name: GNOME settings - set wallpaper
+      dconf:
+        key: /org/gnome/desktop/background/picture-uri
+        value: "'file:///home/{{ ansible_user_id }}/.wallpaper.jpg'"
+        state: present
+    - name: GNOME settings - turn off screensaver - part 1
+      shell: xset s 0 0
+    - name: GNOME settings - turn off screensaver - part 2
+      shell: xset s off
+    - name: GNOME settings - turn off screensaver - part 3
+      dconf:
+        key: /org/gnome/desktop/session/idle-delay
+        value: "'0'"
+        state: present
+    
+    - name: Install VS Code - part 1
+      blockinfile:
+        path: /home/{{ ansible_user_id }}/install_vscode.sh
+        create: true
+        block: |
+          curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
+          mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
+          echo "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list
+          apt-get update
+          apt-get install code -y
+    - name: Install VS Code - part 2
+      shell: sh /home/{{ ansible_user_id }}/install_vscode.sh
+      become: true
+    - name: Install VS Code - part 3
+      file:
+        path: /home/{{ ansible_user_id }}/install_vscode.sh
+        state: absent
